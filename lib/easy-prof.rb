@@ -1,4 +1,4 @@
-require "easy-prof/version"
+require 'easy-prof/version'
 require "ruby-prof"
 
 module EasyProf
@@ -7,20 +7,22 @@ module EasyProf
   end
 
   module ClassMethods
-    def instrument(method_name)
+    def instrument(method_name, options = {})
       @methods ||= []
       @methods << method_name.to_sym
+      @profiler_options = {:profile_location => 'tmp/profile-graph.html',
+                           :measure_mode => RubyProf::WALL_TIME}
+      @profiler_options.merge!(options)
 
       self.class_eval do
         def profile(method, *args, &block)
-          require 'ruby-prof'
-          RubyProf.measure_mode = RubyProf::WALL_TIME
+          RubyProf.measure_mode = _profiler_options[:measure_mode]
           RubyProf.start
 
           send(method, *args, &block)
 
           results = RubyProf.stop
-          profile_location = "tmp/profile-graph.html"
+          profile_location = _profiler_options[:profile_location]
           File.open profile_location, 'w' do |file|
             RubyProf::GraphHtmlPrinter.new(results).print(file)
           end
@@ -37,6 +39,10 @@ module EasyProf
             unless method_defined?(new_method)
 
               class_eval <<-CODEZ
+              def _profiler_options
+                #{@profiler_options.inspect}
+              end
+
               def #{new_method.to_s}(*args, &block)
                 profile(:#{old_method}, *args, &block)
               end
