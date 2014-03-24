@@ -1,5 +1,5 @@
 require 'easy-prof/version'
-require "ruby-prof"
+require 'ruby-prof'
 
 module EasyProf
   def self.included(instrumented_class)
@@ -10,11 +10,11 @@ module EasyProf
     def instrument(method_name, options = {})
       @methods ||= []
       @methods << method_name.to_sym
-      @profiler_options = {:profile_location => 'tmp/profile-graph.html',
-                           :measure_mode => RubyProf::WALL_TIME}
+      @profiler_options = { :profile_location => 'tmp/profile-graph.html',
+                            :measure_mode => RubyProf::WALL_TIME }
       @profiler_options.merge!(options)
 
-      self.class_eval do
+      class_eval do
         def profile(method, *args, &block)
           RubyProf.measure_mode = _profiler_options[:measure_mode]
           RubyProf.start
@@ -29,10 +29,9 @@ module EasyProf
         end
       end
 
-      self.instance_eval do
+      instance_eval do
 
         def method_added(method_name)
-
           if @methods.include?(method_name)
             new_method = "#{method_name}_with_instrumentation".to_sym
             old_method = "#{method_name}_without_instrumentation".to_sym
@@ -43,7 +42,7 @@ module EasyProf
                 #{@profiler_options.inspect}
               end
 
-              def #{new_method.to_s}(*args, &block)
+              def #{new_method}(*args, &block)
                 profile(:#{old_method}, *args, &block)
               end
               CODEZ
